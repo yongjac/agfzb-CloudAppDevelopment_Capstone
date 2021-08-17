@@ -105,20 +105,38 @@ def add_review(request, dealer_id):
     context = {}
     if request.method == 'GET':
         context['dealer_id'] = dealer_id
-        # context['cars'] = get_object_or_404(CarModel, dealer_id=dealer_id)
+        context['cars'] = CarModel.objects.filter(dealer_id=dealer_id)
+        url = "https://4103a966.us-south.apigw.appdomain.cloud/djangoapp/api/dealership"
+        dealer = get_dealer_by_id_from_cf(url, dealer_id)
+        if dealer:
+            context['dealer'] = dealer[0]
+        else:
+            context['dealer'] = {'full_name': 'No dealer'}
         return render(request, 'djangoapp/add_review.html', context)
     if request.method == "POST":
         user = request.user
         if user.is_authenticated:
-            url = 'https://4103a966.us-south.apigw.appdomain.cloud/djangoapp/api/review'
+            content = request.POST['content']
+            car_id = int(request.POST['car'])
+            car = get_object_or_404(CarModel, pk=car_id)
+            purchase_date = request.POST['purchasedate']
+            
             review = {}
-            review["time"] = datetime.utcnow().isoformat()
+            if 'purchasecheck' in request.POST:
+                review["purchase"] = True
+            else:
+                review["purchase"] = False
             review["dealership"] = dealer_id
-            review["review"] = "This is a great car dealer"
-            review["name"] = user.first_name + " " + user.last_name
-            review["purchase"] = False
+            review["review"] = content
+            review["name"] = user.get_full_name()
+            review['car_make'] = car.make.name
+            review['car_model'] = car.name
+            review['car_year'] = car.year.strftime("%Y")
+            review['purchase_date'] = purchase_date
+            
             json_payload = {}
             json_payload["review"] = review
-            result = post_request(url, json_payload, dealerId=dealer_id)
-            return HttpResponse(result)
+            url = 'https://4103a966.us-south.apigw.appdomain.cloud/djangoapp/api/review'
+            post_request(url, json_payload, dealerId=dealer_id)
+            return redirect("djangoapp:dealer_details", dealer_id=dealer_id)
 

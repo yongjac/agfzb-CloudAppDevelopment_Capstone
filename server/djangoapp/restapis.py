@@ -71,7 +71,9 @@ def get_dealer_reviews_from_cf(url, dealer_id):
         for review in reviews:
             # Create a review object
             review_obj = DealerReview(dealership=review['dealership'], name=review['name'], purchase=review['purchase'],
-                                      review=review['review'], id=review['id'])
+                                      review=review['review'])
+            if 'id' in review:
+                review_obj.id = review['id']
             if 'car_make' in review:
                 review_obj.car_make = review['car_make']
             if 'car_model' in review:
