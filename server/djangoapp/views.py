@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from .restapis import get_dealers_from_cf, get_dealer_by_id_from_cf, get_dealer_reviews_from_cf, post_request
+from .models import CarModel
 from datetime import datetime
 import logging
 import json
@@ -101,6 +102,11 @@ def get_dealer_details(request, dealer_id):
 
 # Create a `add_review` view to submit a review
 def add_review(request, dealer_id):
+    context = {}
+    if request.method == 'GET':
+        context['dealer_id'] = dealer_id
+        # context['cars'] = get_object_or_404(CarModel, dealer_id=dealer_id)
+        return render(request, 'djangoapp/add_review.html', context)
     if request.method == "POST":
         user = request.user
         if user.is_authenticated:
